@@ -585,7 +585,7 @@ mkdir -p /var/sphinx/log2
 chmod a+w /var/sphinx/data2chmod a+w /var/sphinx/log2[/pre]';
 
 	// Add a extra step for postgresql.
-//	if ($db_type == 'postgresql')
+	if ($db_type == 'postgresql')
 		$message .= '
 		[hr]
 		' . $txt['sphinx_config_hints_pgsql_func'] . '
