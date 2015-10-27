@@ -37,7 +37,7 @@ class sphinxql_search
 	/**
 	 * @var string The minimum SMF version that this will work with
 	 */
-	public $min_smf_version = 'SMF 2.0`';
+	public $min_smf_version = 'SMF 2.0';
 
 	/**
 	 * @var bool Whether or not it's supported
