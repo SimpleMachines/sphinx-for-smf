@@ -6,8 +6,9 @@ SMF ships by default with the standard, full text and custom index options.  Alt
 
 In order to use this, you must use the following or higher.
 - SMF 2.0.12 or higher
-    - SMF 2.1 support has had very little testing 
+    - SMF 2.1 support has had very little testing.
 - Supports MySQL and MySQLi functions
+    - Initial Postgresql support was added but has had limited testing. 
 - Tested with Sphinx Search 2.2.10 using the SphinxQL (not the API)
 - Any Linux distribution using kernel 3.0
     - Ubuntu 14.04
