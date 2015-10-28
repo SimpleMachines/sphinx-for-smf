@@ -5,7 +5,7 @@ Sphinx for SMF is a customization that allows SMF to make use of the [Sphinx Sea
 SMF ships by default with the standard, full text and custom index options.  Although most forums will have no problems using these options, larger SMF forums will start to suffer performance degradation.  There are limits to what you can find in a second, the stress on the database and locked tables are only some of the problems you will run into with MySQL as your database grows.
 
 In order to use this, you must use the following or higher.
-- SMF 2.0.12 or higher
+- SMF 2.0.11 or higher
     - SMF 2.1 support has had very little testing.
 - Supports MySQL and MySQLi functions
     - Initial Postgresql support was added but has had limited testing. 
