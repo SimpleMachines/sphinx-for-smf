@@ -6,6 +6,7 @@ $txt['search_index_sphinxql'] = 'SphinxQL';
 $txt['search_index_sphinxql_desc'] = '3rd party Sphinx Search Engine.';
 
 $txt['sphinx_download_config'] = 'Download Sphinx.conf';
+$txt['sphinx_view_config'] = 'View Sphinx.conf';
 
 $txt['sphinx_admin_title'] = 'Sphinx';
 $txt['sphinx_server_config_tittle'] = 'Sphinx Server Config Settings';
