@@ -587,7 +587,7 @@ function template_callback_SMFAction_Sphinx_Hints()
 	echo '
 				<dt></dt>
 				<dd><a href="', $scripturl, '?action=admin;area=managesearch;sa=weights">', $txt['search_weights'], '</a></dd>
-				<dd><a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig">', $txt['sphinx_download_config'], '</a></dd>
+				<dd>[<a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig;view">', $txt['sphinx_view_config'], '</a> | <a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig">', $txt['sphinx_download_config'], '</a>] (', $txt['sphinx_config_hints_save'], ')</dd>
 			</dl>';
 
 
@@ -698,8 +698,15 @@ function generateSphinxConfig()
 	header('Accept-Ranges: bytes');
 	header('Connection: close');
 	header('ETag: ' . sha1('sphinx.conf' + time()));
-	header('Content-Type: ' . ($context['browser']['is_ie'] || $context['browser']['is_opera'] ? 'application/octetstream' : 'application/octet-stream'));
-	header('Content-Disposition: attachment; filename="sphinx.conf"');
+
+	if (isset($_GET['view']))
+		header('Content-Type: text/plain');
+	else
+	{
+		header('Content-Type: ' . ($context['browser']['is_ie'] || $context['browser']['is_opera'] ? 'application/octetstream' : 'application/octet-stream'));
+		header('Content-Disposition: attachment; filename="sphinx.conf"');
+	}
+
 	header('Cache-Control: max-age=' . (525600 * 60) . ', private');
 
 	// At this point, we are generating the configuration file.
@@ -741,7 +748,7 @@ source smf_source
 	// Thanks to TheStupidOne for pgsql queries.
 	if ($db_type == 'pgsql')
 		echo '
-sql_query =     \
+	sql_query =     \
 	SELECT \
 		m.id_msg, m.id_topic, m.id_board, CASE WHEN m.id_member = 0 THEN 4294967295 ELSE m.id_member END AS id_member, m.poster_time, m.body, m.subject, \
 		t.num_replies + 1 AS num_replies, CEILING(1000000 * ( \
