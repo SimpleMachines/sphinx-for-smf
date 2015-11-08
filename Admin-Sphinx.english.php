@@ -20,6 +20,12 @@ $txt['sphinx_data_path_subtext'] = 'This is the path that will be containing the
 $txt['sphinx_log_path'] = 'Log path';
 $txt['sphinx_log_path_subtext'] = 'Server path that will contain the log files created by Sphinx.';
 
+$txt['sphinx_conf_path'] = 'Conf path';
+$txt['sphinx_conf_path_subtext'] = 'Server path that will contain the configuration file.';
+
+$txt['sphinx_bin_path'] = 'Bin path';
+$txt['sphinx_bin_path_subtext'] = 'Server path that will contain the searchd binary.';
+
 $txt['sphinx_stopword_path'] = 'Stopword path';
 $txt['sphinx_stopword_path_subtext'] = 'The server path to the stopword list (leave empty for no stopword list).';
 

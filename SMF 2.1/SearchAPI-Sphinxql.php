@@ -140,6 +140,8 @@ public function isValid()
 			'</strong><small><em>' . $txt['sphinx_server_config_note'] . '</em></small><strong>',
 			array('text', 'sphinx_data_path', 65, 'default_value' => '/var/sphinx/data', 'subtext' => $txt['sphinx_data_path_subtext']),
 			array('text', 'sphinx_log_path', 65, 'default_value' => '/var/sphinx/log', 'subtext' => $txt['sphinx_log_path_subtext']),
+			array('text', 'sphinx_conf_path', 65, 'default_value' => '/etc/sphinxsearch', 'subtext' => $txt['sphinx_conf_path_subtext']),
+			array('text', 'sphinx_bin_path', 65, 'default_value' => '/usr/bin', 'subtext' => $txt['sphinx_conf_path_subtext']),
 			array('text', 'sphinx_stopword_path', 65, 'default_value' => '', 'subtext' => $txt['sphinx_stopword_path_subtext']),
 			array('int', 'sphinx_indexer_mem', 6, 'default_value' => '32', 'subtext' => $txt['sphinx_indexer_mem_subtext'], 'postinput' => $txt['sphinx_indexer_mem_postinput']),
 			array('int', 'sphinx_indexer_mem', 6, 'default_value' => '32', 'subtext' => $txt['sphinx_indexer_mem_subtext'], 'postinput' => $txt['sphinx_indexer_mem_postinput']),
@@ -841,6 +843,12 @@ function template_callback_SMFAction_Sphinx_Hints()
 		return;
 	}
 
+	// Ensure these exist.
+	if (empty($modSettings['sphinx_conf_path']))
+		$modSettings['sphinx_conf_path'] = '/etc/sphinxsearch';
+	if (empty($modSettings['sphinx_bin_path']))
+		$modSettings['sphinx_bin_path'] = '/usr/bin';
+
 	echo '
 				<dt></dt>
 				<dd><a href="', $scripturl, '?action=admin;area=managesearch;sa=weights">', $txt['search_weights'], '</a></dd>
@@ -849,10 +857,10 @@ function template_callback_SMFAction_Sphinx_Hints()
 
 
 	$message = '
-		' . sprintf($txt['sphinx_config_hints_desc'], $modSettings['sphinx_data_path']) . '[pre]mkdir -p /var/sphinx
-mkdir -p /var/sphinx/data2
-mkdir -p /var/sphinx/log2
-chmod a+w /var/sphinx/data2chmod a+w /var/sphinx/log2[/pre]';
+		' . sprintf($txt['sphinx_config_hints_desc'], $modSettings['sphinx_data_path']) . '[pre]mkdir -p ', $modSettings['sphinx_data_path'], '
+mkdir -p ', $modSettings['sphinx_log_path'], '
+chmod a+w ', $modSettings['sphinx_data_path'], '
+chmod a+w ', $modSettings['sphinx_log_path'], '[/pre]';
 
 	// Add a extra step for postgresql.
 	if ($db_type == 'postgresql')
@@ -882,13 +890,13 @@ LANGUAGE plpgsql;[/code]';
 
 	$message .= '
 		[hr]
-		' . $txt['sphinx_config_hints_index_start'] . '[pre]indexer --config /usr/local/etc/sphinx.conf --all
-searchd --config /usr/local/etc/sphinx.conf[/pre]
+		' . $txt['sphinx_config_hints_index_start'] . '[pre]' . $modSettings['sphinx_bin_path'] . '/indexer --config ' . $modSettings['sphinx_conf_path'] . '/sphinx.conf --all
+' . $modSettings['sphinx_bin_path'] . '/searchd --config ' . $modSettings['sphinx_conf_path'] . '/sphinx.conf[/pre]
 		' . $txt['sphinx_config_hints_index_finish'] . '
 		[hr]
 		' . $txt['sphinx_config_hints_cron_start'] . '[pre]# search indexer
-10 3 * * * /usr/local/bin/indexer --config /usr/local/etc/sphinx.conf --rotate smf_base_index
-0 * * * * /usr/local/bin/indexer --config /usr/local/etc/sphinx.conf --rotate smf_delta_index[/pre]';
+10 3 * * * ' . $modSettings['sphinx_bin_path'] . '/indexer --config ' . $modSettings['sphinx_conf_path'] . '/sphinx.conf --rotate smf_base_index
+0 * * * * ' . $modSettings['sphinx_bin_path'] . '/indexer --config ' . $modSettings['sphinx_conf_path'] . '/sphinx.conf --rotate smf_delta_index[/pre]';
 
 	// Print out our message.
 	echo parse_bbc($message);
