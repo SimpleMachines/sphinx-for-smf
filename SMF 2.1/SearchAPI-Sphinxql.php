@@ -283,6 +283,10 @@ public function isValid()
 
 			$query .= ' LIMIT 0,' . (int) $modSettings['sphinx_max_results'];
 
+			// Any limitations we need to add?
+			if (!empty($modSettings['sphinx_max_results']) && (int) $modSettings['sphinx_max_results'] > 0)
+				$query .= ' OPTION max_matches=' . (int) $modSettings['sphinx_max_results'];
+
 			// Execute the search query.
 			$request = $this->dbfunc_query($query, $mySphinx);
 
