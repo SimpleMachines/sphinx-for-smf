@@ -933,14 +933,11 @@ function generateSphinxConfig()
 
 	// Send the attachment headers.
 	header('Pragma: ');
-	if (!$context['browser']['is_gecko'])
-		header('Content-Transfer-Encoding: binary');
 	header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 525600 * 60) . ' GMT');
 	header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
-	header('Accept-Ranges: bytes');
 	header('Connection: close');
 	header('ETag: ' . sha1('sphinx.conf' + time()));
-	header('Content-Type: ' . ($context['browser']['is_ie'] || $context['browser']['is_opera'] ? 'application/octetstream' : 'application/octet-stream'));
+	header('Content-Type: text/plain');
 	header('Content-Disposition: attachment; filename="sphinx.conf"');
 	header('Cache-Control: max-age=' . (525600 * 60) . ', private');
 
