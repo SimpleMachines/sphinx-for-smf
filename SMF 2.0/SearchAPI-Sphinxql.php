@@ -141,6 +141,7 @@ class sphinxql_search
 			// SMF Configuration Settings.
 			array('title', 'sphinx_smf_sphinx_tittle'),
 			array('text', 'sphinx_searchd_server', 32, 'default_value' => 'localhost', 'subtext' => $txt['sphinx_searchd_server_subtext']),
+			array('check', 'sphinx_searchd_bind', 0, 'subtext' => $txt['sphinx_searchd_bind_subtext']),
 			// This is for the non legacy QL version, which we are not going support at this time.
 			//array('int', 'sphinx_searchd_port', 6, 'default_value' => '9312', 'subtext' => $txt['sphinx_searchd_port_subtext']),
 			array('int', 'sphinxql_searchd_port', 6, 'default_value' => '9306', 'subtext' => $txt['sphinxql_searchd_port_subtext']),
@@ -452,11 +453,19 @@ class sphinxql_search
 			$port = (int) $modSettings['sphinxql_searchd_port'];
 
 		if ($this->db_type == 'mysqli')
-			return mysqli_connect($host, '', '', '', $port);
+			$mySphinx = mysqli_connect($host, '', '', '', $port);
 		else
 			// I tried to do this properly by changing error_reporting, but PHP ignores that. So surpress!
-			return @mysql_connect($host . ':' . $port);
+			$mySphinx = @mysql_connect($host . ':' . $port);
 
+		// Is the Sphinx engine offline?
+		if (!is_resource($mySphinx))
+		{
+			loadLanguage('Errors');
+			fatal_error($txt['error_no_search_daemon']);
+		}
+
+		return $mySphinx;
 	}
 	/**
 	 * Sphinx Database Support API: query
@@ -670,6 +679,8 @@ function generateSphinxConfig()
 	else
 		$supported_db_type = 'mysql';
 
+	$host = $modSettings['sphinx_searchd_server'] == 'localhost' ? '127.0.0.1' : $modSettings['sphinx_searchd_server'];
+
 	// Lets fall out of SMF templating and start the headers to serve a file.
 	ob_end_clean();
 	ob_start();
@@ -809,7 +820,7 @@ searchd
 	//	listen 			= ', (int) $modSettings['sphinx_searchd_port'], '
 
 	echo '
-	listen 			= ', (int) $modSettings['sphinxql_searchd_port'], ':mysql41
+	listen 			= ', !empty($modSettings['sphinx_searchd_bind']) ? $host : '0.0.0.0', ':', (int) $modSettings['sphinxql_searchd_port'], ':mysql41
 	log 			= ', $modSettings['sphinx_log_path'], '/searchd.log
 	query_log 		= ', $modSettings['sphinx_log_path'], '/query.log
 	read_timeout 	= 5

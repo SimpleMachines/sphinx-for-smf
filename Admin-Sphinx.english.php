@@ -30,6 +30,9 @@ $txt['sphinx_indexer_mem_postinput'] = 'MB';
 $txt['sphinx_searchd_server'] = 'Sphinx server';
 $txt['sphinx_searchd_server_subtext'] = 'Server the Sphinx search deamon resides on.';
 
+$txt['sphinx_searchd_bind'] = 'Bind daemon to interface';
+$txt['sphinx_searchd_bind_subtext'] = 'Binds the daemon to the Sphinx server address.';
+
 $txt['sphinxql_searchd_port'] = 'Sphinx port';
 $txt['sphinxql_searchd_port_subtext'] = 'Port on which the search deamon will listen.';
 
