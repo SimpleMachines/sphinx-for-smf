@@ -135,7 +135,7 @@ class sphinxql_search
 			array('text', 'sphinx_data_path', 65, 'default_value' => '/var/sphinx/data', 'subtext' => $txt['sphinx_data_path_subtext']),
 			array('text', 'sphinx_log_path', 65, 'default_value' => '/var/sphinx/log', 'subtext' => $txt['sphinx_log_path_subtext']),
 			array('text', 'sphinx_conf_path', 65, 'default_value' => '/etc/sphinxsearch', 'subtext' => $txt['sphinx_conf_path_subtext']),
-			array('text', 'sphinx_bin_path', 65, 'default_value' => '/usr/bin', 'subtext' => $txt['sphinx_conf_path_subtext']),
+			array('text', 'sphinx_bin_path', 65, 'default_value' => '/usr/bin', 'subtext' => $txt['sphinx_bin_path_subtext']),
 			array('text', 'sphinx_stopword_path', 65, 'default_value' => '', 'subtext' => $txt['sphinx_stopword_path_subtext']),
 			array('int', 'sphinx_indexer_mem', 6, 'default_value' => '32', 'subtext' => $txt['sphinx_indexer_mem_subtext'], 'postinput' => $txt['sphinx_indexer_mem_postinput']),
 			array('int', 'sphinx_indexer_mem', 6, 'default_value' => '32', 'subtext' => $txt['sphinx_indexer_mem_subtext'], 'postinput' => $txt['sphinx_indexer_mem_postinput']),
