@@ -808,8 +808,15 @@ searchd
 	// This is for the non legacy QL version, which we are not going support at this time.
 	//	listen 			= ', (int) $modSettings['sphinx_searchd_port'], '
 
+	if ($modSettings['sphinx_searchd_server'] == "localhost" ||
+	    $modSettings['sphinx_searchd_server'] == "127.0.0.1") {
+		$host = $modSettings['sphinx_searchd_server'] . ':';
+	} else {
+		$host = '';
+	}
+
 	echo '
-	listen 			= ', (int) $modSettings['sphinxql_searchd_port'], ':mysql41
+	listen 			= ', $host, (int) $modSettings['sphinxql_searchd_port'], ':mysql41
 	log 			= ', $modSettings['sphinx_log_path'], '/searchd.log
 	query_log 		= ', $modSettings['sphinx_log_path'], '/query.log
 	read_timeout 	= 5
