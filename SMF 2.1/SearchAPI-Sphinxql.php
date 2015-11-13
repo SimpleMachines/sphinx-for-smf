@@ -852,7 +852,7 @@ function template_callback_SMFAction_Sphinx_Hints()
 	echo '
 				<dt></dt>
 				<dd><a href="', $scripturl, '?action=admin;area=managesearch;sa=weights">', $txt['search_weights'], '</a></dd>
-				<dd>[<a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig;view">', $txt['sphinx_view_config'], '</a> | <a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig">', $txt['sphinx_download_config'], '</a>] (', $txt['sphinx_config_hints_save'], ')</dd>
+				<dd>[<a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig;view" target="_blank">', $txt['sphinx_view_config'], '</a> | <a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig">', $txt['sphinx_download_config'], '</a>] (', $txt['sphinx_config_hints_save'], ')</dd>
 			</dl>';
 
 
