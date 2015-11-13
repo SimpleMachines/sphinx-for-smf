@@ -857,10 +857,10 @@ function template_callback_SMFAction_Sphinx_Hints()
 
 
 	$message = '
-		' . sprintf($txt['sphinx_config_hints_desc'], $modSettings['sphinx_data_path']) . '[pre]mkdir -p ', $modSettings['sphinx_data_path'], '
-mkdir -p ', $modSettings['sphinx_log_path'], '
-chmod a+w ', $modSettings['sphinx_data_path'], '
-chmod a+w ', $modSettings['sphinx_log_path'], '[/pre]';
+		' . sprintf($txt['sphinx_config_hints_desc'], $modSettings['sphinx_data_path']) . '[pre]mkdir -p ' . $modSettings['sphinx_data_path'] . '
+mkdir -p ' . $modSettings['sphinx_log_path'] . '
+chmod a+w ' . $modSettings['sphinx_data_path'] . '
+chmod a+w ' . $modSettings['sphinx_log_path'] . '[/pre]';
 
 	// Add a extra step for postgresql.
 	if ($db_type == 'postgresql')
