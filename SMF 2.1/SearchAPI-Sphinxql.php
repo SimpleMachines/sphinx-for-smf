@@ -1102,7 +1102,7 @@ searchd
 	read_timeout 	= 5
 	max_children 	= 30
 	pid_file 		= ', $modSettings['sphinx_data_path'], '/searchd.pid
-	binlog_path		= ', $modSettings['sphinx_data_path'], '/
+	binlog_path		= ', $modSettings['sphinx_data_path'], '
 }';
 
 die;
