@@ -115,10 +115,10 @@ class sphinxql_search extends search_api
 		}
 	}
 
-public function isValid()
-{
-	return true;
-}
+	public function isValid()
+	{
+		return true;
+	}
 
 	/**
 	 * The Admin Search Settings calls this in order to define extra API settings.
@@ -318,8 +318,6 @@ public function isValid()
 			$this->dbfunc_close($mySphinx);
 
 			$cached_results['total'] = count($cached_results['matches']);
-
-var_dump($cached_results);
 
 			// Store the search results in the cache.
 			cache_put_data('search_results_' . md5($user_info['query_see_board'] . '_' . $context['params']), $cached_results, 600);
@@ -707,7 +705,7 @@ var_dump($cached_results);
 	 */
 	private function dbfunc_connect($host = '', $port = '')
 	{
-		global $modSettings;
+		global $modSettings, $txt;
 
 		// Fill out our host and port if needed.
 		if (empty($host))
@@ -716,16 +714,26 @@ var_dump($cached_results);
 			$port = (int) $modSettings['sphinxql_searchd_port'];
 
 		if ($this->db_type == 'mysqli')
+		{
 			$mySphinx = mysqli_connect($host, '', '', '', $port);
+
+			// Mysqli is never a resource, but an object.
+			if (!is_object($mySphinx) || $mySphinx->connect_errno > 0)
+			{
+				loadLanguage('Errors');
+				fatal_error($txt['error_no_search_daemon']);
+			}			
+		}
 		else
+		{
 			// I tried to do this properly by changing error_reporting, but PHP ignores that. So surpress!
 			$mySphinx = @mysql_connect($host . ':' . $port);
 
-		// Is the Sphinx engine offline?
-		if (!is_resource($mySphinx))
-		{
-			loadLanguage('Errors');
-			fatal_error($txt['error_no_search_daemon']);
+			if (!is_resource($mySphinx))
+			{
+				loadLanguage('Errors');
+				fatal_error($txt['error_no_search_daemon']);
+			}			
 		}
 
 		return $mySphinx;

@@ -450,7 +450,7 @@ class sphinxql_search
 	 */
 	private function dbfunc_connect($host = '', $port = '')
 	{
-		global $modSettings;
+		global $modSettings, $txt;
 
 		// Fill out our host and port if needed.
 		if (empty($host))
@@ -459,16 +459,26 @@ class sphinxql_search
 			$port = (int) $modSettings['sphinxql_searchd_port'];
 
 		if ($this->db_type == 'mysqli')
+		{
 			$mySphinx = mysqli_connect($host, '', '', '', $port);
+
+			// Mysqli is never a resource, but an object.
+			if (!is_object($mySphinx) || $mySphinx->connect_errno > 0)
+			{
+				loadLanguage('Errors');
+				fatal_error($txt['error_no_search_daemon']);
+			}			
+		}
 		else
+		{
 			// I tried to do this properly by changing error_reporting, but PHP ignores that. So surpress!
 			$mySphinx = @mysql_connect($host . ':' . $port);
 
-		// Is the Sphinx engine offline?
-		if (!is_resource($mySphinx))
-		{
-			loadLanguage('Errors');
-			fatal_error($txt['error_no_search_daemon']);
+			if (!is_resource($mySphinx))
+			{
+				loadLanguage('Errors');
+				fatal_error($txt['error_no_search_daemon']);
+			}			
 		}
 
 		return $mySphinx;
