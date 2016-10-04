@@ -259,7 +259,7 @@ class sphinxql_search
 			// Set the limits based on the search parameters.
 			$extra_where = array();
 			if (!empty($search_params['min_msg_id']) || !empty($search_params['max_msg_id']))
-				$extra_where[] = '@id >= ' . $search_params['min_msg_id'] . ' AND @id <=' . (empty($search_params['max_msg_id']) ? (int) $modSettings['maxMsgID'] : $search_params['max_msg_id']);
+				$extra_where[] = 'id >= ' . $search_params['min_msg_id'] . ' AND id <=' . (empty($search_params['max_msg_id']) ? (int) $modSettings['maxMsgID'] : $search_params['max_msg_id']);
 			if (!empty($search_params['topic']))
 				$extra_where[] = 'id_topic = ' . (int) $search_params['topic'];
 			if (!empty($search_params['brd']))
