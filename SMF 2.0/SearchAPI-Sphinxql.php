@@ -317,7 +317,7 @@ class sphinxql_search
 		}
 
 		$participants = array();
-		foreach (array_slice(array_keys($cached_results['matches']), $_REQUEST['start'], $modSettings['search_results_per_page']) as $msgID)
+		foreach (array_slice(array_keys($cached_results['matches']), (int) $_REQUEST['start'], $modSettings['search_results_per_page']) as $msgID)
 		{
 			$context['topics'][$msgID] = $cached_results['matches'][$msgID];
 			$participants[$cached_results['matches'][$msgID]['id']] = false;
