@@ -75,7 +75,7 @@ class sphinxql_search extends search_api
 		}
 
 		// We sorta support mysqli at this point.
-		if ($db_type == 'mysqli')
+		if ($db_type == 'mysqli' || (function_exists('mysqli_connect') && !function_exists('mysql_connect')))
 			$this->db_type = 'mysqli';
 	}
 
