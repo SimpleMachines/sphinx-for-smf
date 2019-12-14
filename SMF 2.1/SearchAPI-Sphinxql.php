@@ -4,13 +4,13 @@
  * Simple Machines Forum (SMF)
  *
  * @package SMF
- * @author Simple Machines http://www.simplemachines.org
- * @copyright 2015 Simple Machines and individual contributors
- * @license http://www.simplemachines.org/about/smf/license.php BSD
+ * @author Simple Machines https://www.simplemachines.org
+ * @copyright 2019 Simple Machines and individual contributors
+ * @license https://www.simplemachines.org/about/smf/license.php BSD
  *
  * The Following fixes a bug in SMF to show this in the settings section.
  * SearchAPI-Sphinxql.php
- * @version 2.0.12
+ * @version 2.0.15
  */
 
 if (!defined('SMF'))
@@ -126,7 +126,7 @@ class sphinxql_search extends search_api
 	 * @access public
 	 * @param array $config_vars All the configuration variables, we have to append or merge these.
 	 */
-	public function searchSettings(&$config_vars)
+	public static function searchSettings(&$config_vars)
 	{
 		global $txt, $scripturl, $context, $settings, $sc, $modSettings;
 
@@ -171,9 +171,11 @@ class sphinxql_search extends search_api
 		{
 			// Make sure this exists, but just push it with the other changes.
 			if (!isset($modSettings['sphinx_indexed_msg_until']))
-			{
 				$config_vars[] = array('int', 'sphinx_indexed_msg_until', 'default_value' => 1);
-			}
+
+			// We still need a port.
+			if (empty($_POST['sphinxql_searchd_port']))
+				$_POST['sphinxql_searchd_port'] = 9306;
 		}
 
 		// This hacks in some defaults that are needed to generate a proper configuration file.
@@ -711,7 +713,7 @@ class sphinxql_search extends search_api
 		if (empty($host))
 			$host = $modSettings['sphinx_searchd_server'] == 'localhost' ? '127.0.0.1' : $modSettings['sphinx_searchd_server'];
 		if (empty($port))
-			$port = (int) $modSettings['sphinxql_searchd_port'];
+			$port = empty($modSettings['sphinxql_searchd_port']) ? 9306 : (int) $modSettings['sphinxql_searchd_port'];
 
 		if ($this->db_type == 'mysqli')
 		{
@@ -984,10 +986,10 @@ function generateSphinxConfig()
 
 	// At this point, we are generating the configuration file.
 	echo '#
-# Sphinx configuration file (sphinx.conf), configured for SMF 2.0
+# Sphinx configuration file (sphinx.conf), configured for SMF 2.1
 #
 # By default the location of this file would probably be:
-# /usr/local/etc/sphinx.conf
+# ' . $modSettings['sphinx_conf_path'] . '/sphinx.conf
 
 source smf_source
 {
@@ -1104,7 +1106,7 @@ searchd
 	//	listen 			= ', (int) $modSettings['sphinx_searchd_port'], '
 
 	echo '
-	listen 			= ', !empty($modSettings['sphinx_searchd_bind']) ? $host : '0.0.0.0', ':', (int) $modSettings['sphinxql_searchd_port'], ':mysql41
+	listen 			= ', !empty($modSettings['sphinx_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['sphinxql_searchd_port']) ? 9306 : (int) $modSettings['sphinxql_searchd_port']), ':mysql41
 	log 			= ', $modSettings['sphinx_log_path'], '/searchd.log
 	query_log 		= ', $modSettings['sphinx_log_path'], '/query.log
 	read_timeout 	= 5

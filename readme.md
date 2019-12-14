@@ -8,14 +8,20 @@ At this time, this API requires sphinx to update itself.  Future support may inc
 
 In order to use this, you must use the following or higher.
 - SMF 2.0.11 or higher
+    - Latest 2.0.x is recommended.
     - SMF 2.1 support has had very little testing.
 - Supports MySQL and MySQLi functions
     - Initial Postgresql support was added but has had limited testing. 
 - Tested with Sphinx Search 2.2.10 using the SphinxQL (not the API)
-- Any Linux distribution using kernel 3.0+ recommended.  This is mostly a recommendation as Sphinx is avaiiable from many package maintainers from a variety of linux flavors and can be compiled on.
-    - Ubuntu 14.04
-    - CentOS 5.9
-    - Debian 7
+- Linux Kernel 3.0+.
+    - This is mostly a recommendation as Sphinx is avaiiable from many package maintainers from a variety of linux flavors and can be compiled on.
+    - Sphinx is supported on 2.4 and 2.6 version kernels and so is this customization.
+- Any modern Linux distribution
+    - Ubuntu 16.04
+    - CentOS 6
+    - Debian 8
+- PHP 5.4
+    - PHP 7.0 or higher recommended
+    - Follow SMF release versioning for specifics of minimum and recommend versions.  This customization will support them.
 
-
-[lnk1]: <http://sphinxsearch.com/>
+[lnk1]: <https://sphinxsearch.com/>
