@@ -443,8 +443,8 @@ class sphinxql_search extends search_api
 		// Fix numbers so they search easier (phone numbers, SSN, dates, etc)
 		$string = preg_replace('~([[:digit:]]+)\pP+(?=[[:digit:]])~u', '', $string);
 
-		// Last but not least, strip everything out that's not alphanumeric
-		$string = preg_replace('~[^\pL\pN]+~u', ' ', $string);
+		// Last but not least, strip everything out that's not alphanumeric or a underscore.
+		$string = preg_replace('~[^\pL\pN_]+~u', ' ', $string);
 
 		return $string;
 	}
@@ -717,7 +717,7 @@ class sphinxql_search extends search_api
 
 		if ($this->db_type == 'mysqli')
 		{
-			$mySphinx = mysqli_connect($host, '', '', '', $port);
+			$mySphinx = @mysqli_connect($host, '', '', '', $port);
 
 			// Mysqli is never a resource, but an object.
 			if (!is_object($mySphinx) || $mySphinx->connect_errno > 0)
