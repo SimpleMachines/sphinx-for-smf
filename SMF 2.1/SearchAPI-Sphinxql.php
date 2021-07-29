@@ -37,7 +37,7 @@ class sphinxql_search extends search_api
 	/**
 	 * @var string The minimum SMF version that this will work with
 	 */
-	public $min_smf_version = 'SMF 2.1 Beta 1';
+	public $min_smf_version = 'SMF 2.1 RC4';
 
 	/**
 	 * @var bool Whether or not it's supported
@@ -461,7 +461,7 @@ class sphinxql_search extends search_api
 	 */
 	public function postCreated(array &$msgOptions, array &$topicOptions, array &$posterOptions)
 	{
-		return ture;
+		return true;
 		//	!! SphinxQL Does support updating the search index from its QL interface.
 		//	!! Sphinx for SMF does not support this at this time. Code is provided
 		//	!! here as examples/testing purposes.
@@ -568,7 +568,7 @@ class sphinxql_search extends search_api
 	 */
 	public function postModified(array &$msgOptions, array &$topicOptions, array &$posterOptions)
 	{
-		return ture;
+		return true;
 		//	!! SphinxQL Does support updating the search index from its QL interface.
 		//	!! Sphinx for SMF does not support this at this time. Code is provided
 		//	!! here as examples/testing purposes.
@@ -586,7 +586,7 @@ class sphinxql_search extends search_api
 	 */
 	public function postRemoved($id_msg)
 	{
-		return ture;
+		return true;
 		//	!! SphinxQL Does support updating the search index from its QL interface.
 		//	!! Sphinx for SMF does not support this at this time. Code is provided
 		//	!! here as examples/testing purposes.
@@ -627,7 +627,7 @@ class sphinxql_search extends search_api
 	 */
 	public function topicsRemoved(array $topics)
 	{
-		return ture;
+		return true;
 		//	!! SphinxQL Does support updating the search index from its QL interface.
 		//	!! Sphinx for SMF does not support this at this time. Code is provided
 		//	!! here as examples/testing purposes.
@@ -664,7 +664,7 @@ class sphinxql_search extends search_api
 	 */
 	public function topicsMoved(array $topics, $board_to)
 	{
-		return ture;
+		return true;
 		//	!! SphinxQL Does support updating the search index from its QL interface.
 		//	!! Sphinx for SMF does not support this at this time. Code is provided
 		//	!! here as examples/testing purposes.

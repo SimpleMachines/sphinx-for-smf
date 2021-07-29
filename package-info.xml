@@ -15,12 +15,12 @@
 		<remove-file name="$themes_dir/default/languages/Admin-Sphinx.english.php" />
 	</uninstall>
 
-	<install for="SMF 2.1 RC3, 2.1-2.1.99">
+	<install for="SMF 2.1 RC4, 2.1-2.1.99">
 		<move-file name="SMF 2.1/SearchAPI-Sphinxql.php" destination="$sourcedir" />
 		<move-file name="Admin-Sphinx.english.php" destination="$themes_dir/default/languages" />
 		<redirect url="?action=admin;area=managesearch;sa=method" />
 	</install>
-	<uninstall for="SMF 2.1 RC3, 2.1-2.1.99">
+	<uninstall for="SMF 2.1 RC4, 2.1-2.1.99">
 		<remove-file name="$sourcedir/SearchAPI-Sphinxql.php" />
 		<remove-file name="$themes_dir/default/languages/Admin-Sphinx.english.php" />
 	</uninstall>
