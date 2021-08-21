@@ -5,23 +5,16 @@
  *
  * @package SMF
  * @author Simple Machines https://www.simplemachines.org
- * @copyright 2019 Simple Machines and individual contributors
+ * @copyright 2021 Simple Machines and individual contributors
  * @license https://www.simplemachines.org/about/smf/license.php BSD
  *
  * The Following fixes a bug in SMF to show this in the settings section.
  * SearchAPI-Sphinxql.php
- * @version 2.0.15
+ * @version 2.1 RC4
  */
 
 if (!defined('SMF'))
 	die('Hacking attempt...');
-
-/*
-	int searchSort(string $wordA, string $wordB)
-		- callback function for usort used to sort the fulltext results.
-		- the order of sorting is: large words, small words, large words that
-		  are excluded from the search, small words that are excluded.
-*/
 
 /**
  * Our Search API class
@@ -111,7 +104,7 @@ class sphinxql_search extends search_api
 			default:
 				// All other methods, too bad dunno you.
 				return false;
-			return;
+			return false;
 		}
 	}
 
@@ -232,9 +225,16 @@ class sphinxql_search extends search_api
 	 * @param array $query_params An array of parameters for the query
 	 * @param array $searchWords The words that were searched for
 	 * @param array $excludedIndexWords Indexed words that should be excluded
-	 * @param array $participants
-	 * @param array $searchArray
+	 * @param array $participants - Only used if we have enabled participation.
+	 * @param array $searchArray - Builds $context['key_words'] used for highlighting
 	 * @return mixed
+	 	- Both $participants and $searchArray are updated by reference
+	 	- $context['topics'] is populated with a id_msg => array(
+						'id' => id_topic
+						'relevance' => round(relevance / 10000, 1) . '%',
+						'num_matches' => A topic is specififed (ie, searching one topic only) ? $num_rows : 0,
+						'matches' => array(),
+					),	 		
 	 */
 	public function searchQuery(array $query_params, array $searchWords, array $excludedIndexWords, array &$participants, array &$searchArray)
 	{
@@ -333,9 +333,9 @@ class sphinxql_search extends search_api
 		}
 
 		// Sentences need to be broken up in words for proper highlighting.
-		$search_results = array();
+		$searchArray = array();
 		foreach ($searchWords as $orIndex => $words)
-			$search_results = array_merge($search_results, $searchWords[$orIndex]['subject_words']);
+			$searchArray = array_merge($searchArray, $searchWords[$orIndex]['subject_words']);
 
 		return $cached_results['total'];
 	}
@@ -346,7 +346,7 @@ class sphinxql_search extends search_api
 	 * @param string $string The user entered query to construct with
 	 * @return string A binary mode query
 	 */
-	function _constructQuery($string)
+	private function _constructQuery($string)
 	{
 		$keywords = array('include' => array(), 'exclude' => array());
 
@@ -430,7 +430,7 @@ class sphinxql_search extends search_api
 	 * @param string $string A string to clean
 	 * @return string A cleaned up string
 	 */
-	function _cleanString($string)
+	private function _cleanString($string)
 	{
 		global $smcFunc;
 
@@ -637,6 +637,11 @@ class sphinxql_search extends search_api
 		// Create an instance of the sphinx client.
 		$mySphinx = $this->dbfunc_connect();
 
+		// SMF only calls this search API when we delete, not recycle. So this will always be a remove.
+		$query = '
+			DELETE FROM smf_index
+			WHERE id_topic IN (' . implode(', ', $topics) . ')';
+
 		// Execute the search query.
 		$request = $this->dbfunc_query($query, $mySphinx);
 
@@ -703,9 +708,9 @@ class sphinxql_search extends search_api
 	 * @access private
 	 * @param string $host The sphinx search address, this will default to $modSettings['sphinx_searchd_server'].
 	 * @param string $port The port Sphinx runs on, this will default to $modSettings['sphinxql_searchd_port'].
-	 * @return void
+	 * @return resource
 	 */
-	private function dbfunc_connect($host = '', $port = '')
+	private function dbfunc_connect(string $host = '', string $port = '')
 	{
 		global $modSettings, $txt;
 
@@ -746,9 +751,9 @@ class sphinxql_search extends search_api
 	 * @access private
 	 * @param string $query The query to run.
 	 * @param resource $mySphinx A SphinxQL connection resource.
-	 * @return void
+	 * @return resource
 	 */
-	private function dbfunc_query($query, $mySphinx)
+	private function dbfunc_query(string $query, $mySphinx)
 	{
 		// MySQLI Procedural Style has the resource first then the query.
 		if ($this->db_type == 'mysqli')
@@ -762,14 +767,14 @@ class sphinxql_search extends search_api
 	 *
 	 * @access private
 	 * @param resource $mySphinx A SphinxQL request resource.
-	 * @return void
+	 * @return int|string
 	 */
 	private function dbfunc_num_rows($mySphinx)
 	{
 		if ($this->db_type == 'mysqli')
 			return mysqli_num_rows($mySphinx);
 		else
-			return mysql_query($mySphinx);
+			return mysql_num_rows($mySphinx);
 	}
 
 	/**
@@ -777,7 +782,7 @@ class sphinxql_search extends search_api
 	 *
 	 * @access private
 	 * @param resource $mySphinx A SphinxQL request resource.
-	 * @return void
+	 * @return array
 	 */
 	private function dbfunc_fetch_assoc($mySphinx)
 	{
@@ -807,7 +812,7 @@ class sphinxql_search extends search_api
 	 *
 	 * @access private
 	 * @param resource $mySphinx A SphinxQL connection resource.
-	 * @return void
+	 * @return bool
 	 */
 	private function dbfunc_close($mySphinx)
 	{
@@ -822,7 +827,7 @@ class sphinxql_search extends search_api
 	 *
 	 * @access private
 	 * @param resource $mySphinx A SphinxQL connection resource.
-	 * @return void
+	 * @return string
 	 */
 	private function dbfunc_error($mySphinx)
 	{
@@ -972,7 +977,7 @@ function generateSphinxConfig()
 	header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
 	header('Accept-Ranges: bytes');
 	header('Connection: close');
-	header('ETag: ' . sha1('sphinx.conf' + time()));
+	header('ETag: ' . sha1('sphinx.conf' . time()));
 
 	if (isset($_GET['view']))
 		header('Content-Type: text/plain');
