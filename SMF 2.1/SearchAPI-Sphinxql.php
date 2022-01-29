@@ -158,6 +158,7 @@ class sphinxql_search extends search_api
 
 		$context['post_url'] = $scripturl . '?action=admin;area=modsettings;save;sa=sphinx';
 		$context['settings_title'] = $txt['sphinx_server_config_tittle'];
+		$context['sphinx_version'] = self::sphinxversion();
 
 		// Saving?
 		if (isset($_GET['save']))
@@ -836,6 +837,38 @@ class sphinxql_search extends search_api
 		else
 			return mysql_error($mySphinx);
 	}
+	
+	/**
+	 * Sphinx Version
+	 *
+	 * @access private
+	 * @return decimal The Major + minor version of Sphinx.
+	 */
+	private static function sphinxversion()
+	{
+		global $modSettings;
+
+		if (empty($modSettings['sphinx_bin_path']))
+			$modSettings['sphinx_bin_path'] = '/usr/bin';
+
+		if (!file_exists(realpath($modSettings['sphinx_bin_path'] . '/indexer')))
+			return;
+
+		$binary = realpath($modSettings['sphinx_bin_path'] . '/indexer');
+
+		$raw_version = shell_exec($binary . ' -v');
+
+		if (empty($raw_version))
+			return;
+
+		preg_match('~Sphinx (\d+)\.(\d+)~i', $raw_version, $m);		
+
+		// No version?
+		if (empty($m) || empty($m[1]) || empty($m[2]))
+			return;
+			
+		return $m[1] . '.' . $m[2];
+	}
 }
 
 /**
@@ -869,7 +902,6 @@ function template_callback_SMFAction_Sphinx_Hints()
 				<dd><a href="', $scripturl, '?action=admin;area=managesearch;sa=weights">', $txt['search_weights'], '</a></dd>
 				<dd>[<a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig;view" target="_blank">', $txt['sphinx_view_config'], '</a> | <a href="', $scripturl, '?action=admin;area=managesearch;sa=settings;generateConfig">', $txt['sphinx_download_config'], '</a>] (', $txt['sphinx_config_hints_save'], ')</dd>
 			</dl>';
-
 
 	$message = '
 		' . sprintf($txt['sphinx_config_hints_desc'], $modSettings['sphinx_data_path']) . '[pre]mkdir -p ' . $modSettings['sphinx_data_path'] . '
@@ -1060,10 +1092,21 @@ source smf_source
 	echo '
 	sql_attr_uint = id_topic
 	sql_attr_uint = id_board
-	sql_attr_uint = id_member
+	sql_attr_uint = id_member';
+
+	// Sphinx 3.0 dropped sql_attr_timestamp, but sql_attr_uint should be compatible.
+	if (version_compare($context['sphinx_version'], '3.0', '>'))
+		echo '
 	sql_attr_timestamp = poster_time
 	sql_attr_timestamp = relevance
-	sql_attr_timestamp = num_replies
+	sql_attr_timestamp = num_replies';
+	else
+		echo '
+	sql_attr_uint = poster_time
+	sql_attr_uint = relevance
+	sql_attr_uint = num_replies';
+
+	echo '
 }
 
 source smf_delta_source : smf_source
