@@ -265,12 +265,12 @@ class sphinxql_search
 				$extra_where[] = 'id >= ' . $search_params['min_msg_id'] . ' AND id <=' . (empty($search_params['max_msg_id']) ? (int) $modSettings['maxMsgID'] : $search_params['max_msg_id']);
 			if (!empty($search_params['topic']))
 				$extra_where[] = 'id_topic = ' . (int) $search_params['topic'];
-			if (!empty($search_params['brd']))
+			if (!empty($search_params['brd']) && is_array($search_params['brd']))
 				$extra_where[] = 'id_board IN (' . implode(',', $search_params['brd']) . ')';
-			if (!empty($search_params['memberlist']))
+			if (!empty($search_params['memberlist']) && is_array($search_params['memberlist']))
 				$extra_where[] = 'id_member IN (' . implode(',', $search_params['memberlist']) . ')';
 
-			if (!empty($extra_where))
+			if (!empty($extra_where) && is_array($extra_where))
 				$query .= ' AND ' . implode(' AND ', $extra_where);
 
 			// Put together a sort string; besides the main column sort (relevance, id_topic, or num_replies), add secondary sorting based on relevance value (if not the main sort method) and age
