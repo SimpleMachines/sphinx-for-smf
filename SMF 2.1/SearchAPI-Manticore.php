@@ -5,12 +5,12 @@
  *
  * @package SMF
  * @author Simple Machines https://www.simplemachines.org
- * @copyright 2021 Simple Machines and individual contributors
+ * @copyright 2023 Simple Machines and individual contributors
  * @license https://www.simplemachines.org/about/smf/license.php BSD
  *
  * The Following fixes a bug in SMF to show this in the settings section.
  * SearchAPI-Manticore.php
- * @version 2.1.0
+ * @version 2.1.3
  */
 
 if (!defined('SMF'))
@@ -133,9 +133,8 @@ class manticore_search extends search_api
 			array('title', 'manticore_smf_manticore_tittle'),
 			array('text', 'manticore_searchd_server', 32, 'default_value' => 'localhost', 'subtext' => $txt['manticore_searchd_server_subtext']),
 			array('check', 'manticore_searchd_bind', 0, 'subtext' => $txt['manticore_searchd_bind_subtext']),
-			// This is for the non legacy QL version, which we are not going support at this time.
-			//array('int', 'manticore_searchd_port', 6, 'default_value' => '9312', 'subtext' => $txt['manticore_searchd_port_subtext']),
-			array('int', 'manticoreql_searchd_port', 6, 'default_value' => '9306', 'subtext' => $txt['manticoreql_searchd_port_subtext']),
+			array('int', 'manticore_searchd_port', 6, 'default_value' => '9306', 'subtext' => $txt['manticore_searchd_port_subtext']),
+			array('int', 'manticore_version', 6, 'default_value' => '3.0', 'subtext' => $txt['manticore_version_subtext']),
 			array('int', 'manticore_max_results', 6, 'default_value' => '1000', 'subtext' => $txt['manticore_max_results_subtext']),
 
 			// Just a hints section.
@@ -150,6 +149,14 @@ class manticore_search extends search_api
 		$context['settings_title'] = $txt['manticore_server_config_tittle'];
 		$context['manticore_version'] = self::manticoreversion();
 
+		// Try to fall back.
+		if (empty($context['manticore_version']) && !empty($context['manticore_version']))
+			$context['manticore_version'] = $modSettings['manticore_version'];
+		else if (!empty($context['manticore_version']) && empty($context['manticore_version']))
+			$modSettings['manticore_version'] = $context['manticore_version'];
+		else
+			$context['sphinx_version'] = '4.2.0';
+
 		// Saving?
 		if (isset($_GET['save']))
 		{
@@ -158,8 +165,8 @@ class manticore_search extends search_api
 				$config_vars[] = array('int', 'manticore_indexed_msg_until', 'default_value' => 1);
 
 			// We still need a port.
-			if (empty($_POST['manticoreql_searchd_port']))
-				$_POST['manticoreql_searchd_port'] = 9306;
+			if (empty($_POST['manticore_searchd_port']))
+				$_POST['manticore_searchd_port'] = 9306;
 		}
 
 		// This hacks in some defaults that are needed to generate a proper configuration file.
@@ -328,6 +335,12 @@ class manticore_search extends search_api
 		foreach ($searchWords as $orIndex => $words)
 			$searchArray = array_merge($searchArray, $searchWords[$orIndex]['subject_words']);
 
+		// Work around SMF bug causing multiple pages to not work right.
+		if (!isset($_SESSION['search_cache']['num_results']))
+			$_SESSION['search_cache'] = [
+				'num_results' => $cached_results['total']
+			];
+
 		return $cached_results['total'];
 	}
 
@@ -362,7 +375,7 @@ class manticore_search extends search_api
 			$cleanWords = $this->_cleanString($token[2]);
 
 			// Explode the cleanWords again incase the cleaning put more spaces into it
-			$addWords = $phrase ? array('"' . $cleanWords . '"') : preg_split('~ ~u', $cleanWords, NULL, PREG_SPLIT_NO_EMPTY);
+			$addWords = $phrase ? array('"' . $cleanWords . '"') : preg_split('~ ~u', $cleanWords, -1, PREG_SPLIT_NO_EMPTY);
 
 			if ($token[1] == '-')
 				$keywords['exclude'] = array_merge($keywords['exclude'], $addWords);
@@ -698,7 +711,7 @@ class manticore_search extends search_api
 	 *
 	 * @access private
 	 * @param string $host The manticore search address, this will default to $modSettings['manticore_searchd_server'].
-	 * @param string $port The port Manticore runs on, this will default to $modSettings['manticoreql_searchd_port'].
+	 * @param string $port The port Manticore runs on, this will default to $modSettings['manticore_searchd_port'].
 	 * @return resource
 	 */
 	private function dbfunc_connect(string $host = '', string $port = '')
@@ -709,7 +722,7 @@ class manticore_search extends search_api
 		if (empty($host))
 			$host = $modSettings['manticore_searchd_server'] == 'localhost' ? '127.0.0.1' : $modSettings['manticore_searchd_server'];
 		if (empty($port))
-			$port = empty($modSettings['manticoreql_searchd_port']) ? 9306 : (int) $modSettings['manticoreql_searchd_port'];
+			$port = empty($modSettings['manticore_searchd_port']) ? 9306 : (int) $modSettings['manticore_searchd_port'];
 
 		$myManticore = @mysqli_connect($host, '', '', '', $port);
 
@@ -808,8 +821,19 @@ class manticore_search extends search_api
 		if (empty($modSettings['manticore_bin_path']))
 			$modSettings['manticore_bin_path'] = '/usr/bin';
 
-		if (!file_exists(realpath($modSettings['manticore_bin_path'] . '/indexer')))
+		// Try to safely check for the indexer file, but do this in a way we can catch the error so PHP doesn't output it.
+		try {
+			set_error_handler(static function ($severity, $message, $file, $line) {
+				throw new \ErrorException($message, 0, $severity, $file, $line);
+			});
+
+			if (!file_exists(realpath($modSettings['sphinx_bin_path'] . '/indexer')))
+				return;
+		} catch (\Throwable $e) {
 			return;
+		} finally {
+			restore_error_handler();
+		}
 
 		$binary = realpath($modSettings['manticore_bin_path'] . '/indexer');
 
@@ -983,7 +1007,7 @@ function generateManticoreConfig()
 # Manticore configuration file (manticore.conf), configured for SMF 2.1
 #
 # By default the location of this file would probably be:
-# ' . $modSettings['manticore_conf_path'] . '/manticore.conf
+# ' . (empty($modSettings['manticore_conf_path']) ? '/etc/manticoresearch' : $modSettings['manticore_conf_path'])  . '/manticore.conf
 
 source smf_source
 {
@@ -1104,7 +1128,7 @@ searchd
 	//	listen			= ', (int) $modSettings['manticore_searchd_port'], '
 
 	echo '
-	listen				= ', !empty($modSettings['manticore_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['manticoreql_searchd_port']) ? 9306 : (int) $modSettings['manticoreql_searchd_port']), ':mysql41
+	listen				= ', !empty($modSettings['manticore_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['manticore_searchd_port']) ? 9306 : (int) $modSettings['manticore_searchd_port']), ':mysql41
 	log					= ', $modSettings['manticore_log_path'], '/searchd.log
 	query_log			= ', $modSettings['manticore_log_path'], '/query.log
 	network_timeout		= 5
@@ -1112,5 +1136,5 @@ searchd
 	binlog_path			= ', $modSettings['manticore_data_path'], '
 }';
 
-die;
+	die;
 }
