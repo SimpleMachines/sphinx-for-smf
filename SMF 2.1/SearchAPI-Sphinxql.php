@@ -857,8 +857,19 @@ class sphinxql_search extends search_api
 		if (empty($modSettings['sphinx_bin_path']))
 			$modSettings['sphinx_bin_path'] = '/usr/bin';
 
-		if (!file_exists(realpath($modSettings['sphinx_bin_path'] . '/indexer')))
+		// Try to safely check for the indexer file, but do this in a way we can catch the error so PHP doesn't output it.
+		try {
+			set_error_handler(static function ($severity, $message, $file, $line) {
+				throw new \ErrorException($message, 0, $severity, $file, $line);
+			});
+
+			if (!file_exists(realpath($modSettings['sphinx_bin_path'] . '/indexer')))
+				return;
+		} catch (\Throwable $e) {
 			return;
+		} finally {
+			restore_error_handler();
+		}
 
 		$binary = realpath($modSettings['sphinx_bin_path'] . '/indexer');
 
