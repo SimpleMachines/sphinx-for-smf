@@ -5,12 +5,12 @@
  *
  * @package SMF
  * @author Simple Machines https://www.simplemachines.org
- * @copyright 2019 Simple Machines and individual contributors
+ * @copyright 2023 Simple Machines and individual contributors
  * @license https://www.simplemachines.org/about/smf/license.php BSD
  *
  * The Following fixes a bug in SMF to show this in the settings section.
  * SearchAPI-Sphinxql.php
- * @version 2.0.15
+ * @version 2.0.19
  */
 
 if (!defined('SMF'))
@@ -365,7 +365,7 @@ class sphinxql_search
 			$cleanWords = $this->_cleanString($token[2]);
 
 			// Explode the cleanWords again incase the cleaning put more spaces into it
-			$addWords = $phrase ? array('"' . $cleanWords . '"') : preg_split('~ ~u', $cleanWords, NULL, PREG_SPLIT_NO_EMPTY);
+			$addWords = $phrase ? array('"' . $cleanWords . '"') : preg_split('~ ~u', $cleanWords, -1, PREG_SPLIT_NO_EMPTY);
 
 			if ($token[1] == '-')
 				$keywords['exclude'] = array_merge($keywords['exclude'], $addWords);
