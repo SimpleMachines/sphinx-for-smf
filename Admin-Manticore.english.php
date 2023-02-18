@@ -43,11 +43,14 @@ $txt['manticore_searchd_server_subtext'] = 'Server the Manticore search deamon r
 $txt['manticore_searchd_bind'] = 'Bind daemon to interface';
 $txt['manticore_searchd_bind_subtext'] = 'Binds the daemon to the Manticore server address.';
 
-$txt['manticoreql_searchd_port'] = 'Manticore port';
-$txt['manticoreql_searchd_port_subtext'] = 'Port on which the search deamon will listen.';
+$txt['manticore_searchd_port'] = 'Manticore port';
+$txt['manticore_searchd_port_subtext'] = 'Port on which the search deamon will listen.';
 
 $txt['manticore_max_results'] = 'Maximum # matches';
 $txt['manticore_max_results_subtext'] = 'Maximum amount of matches the search deamon will return.';
+
+$txt['manticore_version'] = 'Manticore Version';
+$txt['manticore_version_subtext'] = 'If the binary is accessible, it will attempt to auto detect, otherwise fall back to this.';
 
 $txt['manticore_config_hints_save'] = 'Please save your configuration first.';
 $txt['manticore_config_hints_desc'] = 'Create directories for storing the indexes: %1$s';

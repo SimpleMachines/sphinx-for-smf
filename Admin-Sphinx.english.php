@@ -46,6 +46,9 @@ $txt['sphinxql_searchd_port_subtext'] = 'Port on which the search deamon will li
 $txt['sphinx_max_results'] = 'Maximum # matches';
 $txt['sphinx_max_results_subtext'] = 'Maximum amount of matches the search deamon will return.';
 
+$txt['sphinx_version'] = 'Sphinx Version';
+$txt['sphinx_version_subtext'] = 'If the binary is accessible, it will attempt to auto detect, otherwise fall back to this.';
+
 $txt['search_index'] = 'SMF Search API';
 $txt['sphinx_smf_search_standard'] = 'Standard (Default)';
 $txt['sphinx_smf_search_fulltext'] = 'Fulltext';

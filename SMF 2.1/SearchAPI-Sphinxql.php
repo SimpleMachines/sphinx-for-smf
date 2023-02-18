@@ -143,9 +143,8 @@ class sphinxql_search extends search_api
 			array('title', 'sphinx_smf_sphinx_tittle'),
 			array('text', 'sphinx_searchd_server', 32, 'default_value' => 'localhost', 'subtext' => $txt['sphinx_searchd_server_subtext']),
 			array('check', 'sphinx_searchd_bind', 0, 'subtext' => $txt['sphinx_searchd_bind_subtext']),
-			// This is for the non legacy QL version, which we are not going support at this time.
-			//array('int', 'sphinx_searchd_port', 6, 'default_value' => '9312', 'subtext' => $txt['sphinx_searchd_port_subtext']),
 			array('int', 'sphinxql_searchd_port', 6, 'default_value' => '9306', 'subtext' => $txt['sphinxql_searchd_port_subtext']),
+			array('int', 'sphinx_version', 6, 'default_value' => '3.0', 'subtext' => $txt['sphinx_version_subtext']),
 			array('int', 'sphinx_max_results', 6, 'default_value' => '1000', 'subtext' => $txt['sphinx_max_results_subtext']),
 
 			// Just a hints section.
@@ -159,6 +158,14 @@ class sphinxql_search extends search_api
 		$context['post_url'] = $scripturl . '?action=admin;area=modsettings;save;sa=sphinx';
 		$context['settings_title'] = $txt['sphinx_server_config_tittle'];
 		$context['sphinx_version'] = self::sphinxversion();
+
+		// Try to fall back.
+		if (empty($context['sphinx_version']) && !empty($context['sphinx_version']))
+			$context['sphinx_version'] = $modSettings['sphinx_version'];
+		else if (!empty($context['sphinx_version']) && empty($context['sphinx_version']))
+			$modSettings['sphinx_version'] = $context['sphinx_version'];
+		else
+			$context['sphinx_version'] = '3.0';
 
 		// Saving?
 		if (isset($_GET['save']))
@@ -1043,16 +1050,16 @@ function generateSphinxConfig()
 # Sphinx configuration file (sphinx.conf), configured for SMF 2.1
 #
 # By default the location of this file would probably be:
-# ' . $modSettings['sphinx_conf_path'] . '/sphinx.conf
+# ' . (empty($modSettings['sphinx_conf_path']) ? '/etc/sphinxsearch' : $modSettings['sphinx_conf_path'])  . '/sphinx.conf
 
 source smf_source
 {
-	type 		= ', $supported_db_type, '
-	sql_host 	= ', $db_server, '
-	sql_user 	= ', $db_user, '
-	sql_pass 	= ', $db_passwd, '
-	sql_db 		= ', $db_name, '
-	sql_port 	= 3306', empty($db_character_set) ? '' : '
+	type		= ', $supported_db_type, '
+	sql_host	= ', $db_server, '
+	sql_user	= ', $db_user, '
+	sql_pass	= ', $db_passwd, '
+	sql_db		= ', $db_name, '
+	sql_port	= 3306', empty($db_character_set) ? '' : '
 	sql_query_pre = SET NAMES ' . $db_character_set;
 
 	// Thanks to TheStupidOne for pgsql queries.
@@ -1112,7 +1119,7 @@ source smf_source
 	sql_attr_uint = id_member';
 
 	// Sphinx 3.0 dropped sql_attr_timestamp, but sql_attr_uint should be compatible.
-	if (version_compare($context['sphinx_version'], '3.0', '>'))
+	if (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.0', '>'))
 		echo '
 	sql_attr_timestamp = poster_time
 	sql_attr_timestamp = relevance
@@ -1128,8 +1135,8 @@ source smf_source
 
 source smf_delta_source : smf_source
 {
-	sql_query_pre = ', isset($db_character_set) ? 'SET NAMES ' . $db_character_set : '', '
-	sql_query_range = \
+	sql_query_pre	= ', isset($db_character_set) ? 'SET NAMES ' . $db_character_set : '', '
+	sql_query_range	= \
 		SELECT s1.value, s2.value \
 		FROM ', $db_prefix, 'settings AS s1, ', $db_prefix, 'settings AS s2 \
 		WHERE s1.variable = \'sphinx_indexed_msg_until\' \
@@ -1138,30 +1145,30 @@ source smf_delta_source : smf_source
 
 index smf_base_index
 {
-	html_strip 		= 1
-	source 			= smf_source
-	path 			= ', $modSettings['sphinx_data_path'], '/smf_sphinx_base.index', empty($modSettings['sphinx_stopword_path']) ? '' : '
-	stopwords 		= ' . $modSettings['sphinx_stopword_path'], '
-	min_word_len 	= 2
-	charset_table 	= 0..9, A..Z->a..z, _, a..z
+	html_strip	= 1
+	source		= smf_source
+	path		= ', $modSettings['sphinx_data_path'], '/smf_sphinx_base.index', empty($modSettings['sphinx_stopword_path']) ? '' : '
+	stopwords	= ' . $modSettings['sphinx_stopword_path'], '
+	min_word_len	= 2
+	charset_table	= 0..9, A..Z->a..z, _, a..z
 }
 
 index smf_delta_index : smf_base_index
 {
-	source 			= smf_delta_source
-	path 			= ', $modSettings['sphinx_data_path'], '/smf_sphinx_delta.index
+	source		= smf_delta_source
+	path		= ', $modSettings['sphinx_data_path'], '/smf_sphinx_delta.index
 }
 
 index smf_index
 {
-	type			= distributed
-	local			= smf_base_index
-	local			= smf_delta_index
+	type		= distributed
+	local		= smf_base_index
+	local		= smf_delta_index
 }
 
 indexer
 {
-	mem_limit 		= ', (int) $modSettings['sphinx_indexer_mem'], 'M
+	mem_limit	= ', (int) $modSettings['sphinx_indexer_mem'], 'M
 }
 
 searchd
@@ -1171,14 +1178,14 @@ searchd
 	//	listen 			= ', (int) $modSettings['sphinx_searchd_port'], '
 
 	echo '
-	listen 			= ', !empty($modSettings['sphinx_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['sphinxql_searchd_port']) ? 9306 : (int) $modSettings['sphinxql_searchd_port']), ':mysql41
-	log 			= ', $modSettings['sphinx_log_path'], '/searchd.log
-	query_log 		= ', $modSettings['sphinx_log_path'], '/query.log
-	read_timeout 	= 5
-	max_children 	= 30
-	pid_file 		= ', $modSettings['sphinx_data_path'], '/searchd.pid
-	binlog_path		= ', $modSettings['sphinx_data_path'], '
+	listen		= ', !empty($modSettings['sphinx_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['sphinxql_searchd_port']) ? 9306 : (int) $modSettings['sphinxql_searchd_port']), ':mysql41
+	log		= ', $modSettings['sphinx_log_path'], '/searchd.log
+	query_log	= ', $modSettings['sphinx_log_path'], '/query.log
+	read_timeout	= 5
+	max_children	= 30
+	pid_file	= ', $modSettings['sphinx_data_path'], '/searchd.pid
+	binlog_path	= ', $modSettings['sphinx_data_path'], '
 }';
 
-die;
+	die;
 }
