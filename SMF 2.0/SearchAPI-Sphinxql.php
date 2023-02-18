@@ -159,6 +159,7 @@ class sphinxql_search
 
 		$context['post_url'] = $scripturl . '?action=admin;area=modsettings;save;sa=sphinx';
 		$context['settings_title'] = $txt['sphinx_server_config_tittle'];
+		$context['sphinx_version'] = self::sphinxversion();
 
 		// Saving?
 		if (isset($_GET['save']))
@@ -264,12 +265,12 @@ class sphinxql_search
 				$extra_where[] = 'id >= ' . $search_params['min_msg_id'] . ' AND id <=' . (empty($search_params['max_msg_id']) ? (int) $modSettings['maxMsgID'] : $search_params['max_msg_id']);
 			if (!empty($search_params['topic']))
 				$extra_where[] = 'id_topic = ' . (int) $search_params['topic'];
-			if (!empty($search_params['brd']))
+			if (!empty($search_params['brd']) && is_array($search_params['brd']))
 				$extra_where[] = 'id_board IN (' . implode(',', $search_params['brd']) . ')';
-			if (!empty($search_params['memberlist']))
+			if (!empty($search_params['memberlist']) && is_array($search_params['memberlist']))
 				$extra_where[] = 'id_member IN (' . implode(',', $search_params['memberlist']) . ')';
 
-			if (!empty($extra_where))
+			if (!empty($extra_where) && is_array($extra_where))
 				$query .= ' AND ' . implode(' AND ', $extra_where);
 
 			// Put together a sort string; besides the main column sort (relevance, id_topic, or num_replies), add secondary sorting based on relevance value (if not the main sort method) and age
@@ -576,6 +577,38 @@ class sphinxql_search
 		else
 			return mysql_error($mySphinx);
 	}
+
+	/**
+	 * Sphinx Version
+	 *
+	 * @access private
+	 * @return decimal The Major + minor version of Sphinx.
+	 */
+	private static function sphinxversion()
+	{
+		global $modSettings;
+
+		if (empty($modSettings['sphinx_bin_path']))
+			$modSettings['sphinx_bin_path'] = '/usr/bin';
+
+		if (!file_exists(realpath($modSettings['sphinx_bin_path'] . '/indexer')))
+			return;
+
+		$binary = realpath($modSettings['sphinx_bin_path'] . '/indexer');
+
+		$raw_version = shell_exec($binary . ' -v');
+
+		if (empty($raw_version))
+			return;
+
+		preg_match('~Sphinx (\d+)\.(\d+)~i', $raw_version, $m);		
+
+		// No version?
+		if (empty($m) || empty($m[1]) || empty($m[2]))
+			return;
+			
+		return $m[1] . '.' . $m[2];
+	}
 }
 
 /**
@@ -800,10 +833,21 @@ source smf_source
 	echo '
 	sql_attr_uint = id_topic
 	sql_attr_uint = id_board
-	sql_attr_uint = id_member
+	sql_attr_uint = id_member';
+
+	// Sphinx 3.0 dropped sql_attr_timestamp, but sql_attr_uint should be compatible.
+	if (version_compare($context['sphinx_version'], '3.0', '>'))
+		echo '
 	sql_attr_timestamp = poster_time
 	sql_attr_timestamp = relevance
-	sql_attr_timestamp = num_replies
+	sql_attr_timestamp = num_replies';
+	else
+		echo '
+	sql_attr_uint = poster_time
+	sql_attr_uint = relevance
+	sql_attr_uint = num_replies';
+
+	echo '
 }
 
 source smf_delta_source : smf_source
