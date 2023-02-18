@@ -328,6 +328,12 @@ class manticore_search extends search_api
 		foreach ($searchWords as $orIndex => $words)
 			$searchArray = array_merge($searchArray, $searchWords[$orIndex]['subject_words']);
 
+		// Work around SMF bug causing multiple pages to not work right.
+		if (!isset($_SESSION['search_cache']['num_results']))
+			$_SESSION['search_cache'] = [
+				'num_results' => $cached_results['total']
+			];
+
 		return $cached_results['total'];
 	}
 
