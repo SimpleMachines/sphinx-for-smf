@@ -49,6 +49,9 @@ $txt['sphinx_max_results_subtext'] = 'Maximum amount of matches the search deamo
 $txt['sphinx_version'] = 'Sphinx Version';
 $txt['sphinx_version_subtext'] = 'If the binary is accessible, it will attempt to auto detect, otherwise fall back to this.';
 
+$txt['sphinx_index_name'] = 'Index Name';
+$txt['sphinx_index_name_subtext'] = 'Typically only useful in a multi-forum environment, allows running mulitple indexes at once.';
+
 $txt['search_index'] = 'SMF Search API';
 $txt['sphinx_smf_search_standard'] = 'Standard (Default)';
 $txt['sphinx_smf_search_fulltext'] = 'Fulltext';

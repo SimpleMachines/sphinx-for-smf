@@ -52,6 +52,9 @@ $txt['manticore_max_results_subtext'] = 'Maximum amount of matches the search de
 $txt['manticore_version'] = 'Manticore Version';
 $txt['manticore_version_subtext'] = 'If the binary is accessible, it will attempt to auto detect, otherwise fall back to this.';
 
+$txt['manticore_index_name'] = 'Index Name';
+$txt['manticore_index_name_subtext'] = 'Typically only useful in a multi-forum environment, allows running mulitple indexes at once.';
+
 $txt['manticore_config_hints_save'] = 'Please save your configuration first.';
 $txt['manticore_config_hints_desc'] = 'Create directories for storing the indexes: %1$s';
 $txt['manticore_config_hints_pgsql_func'] = 'Execute the following the following statement on your PostgreSQL database';

@@ -120,6 +120,7 @@ class manticore_search extends search_api
 		$local_config_vars = array(
 			array('title', 'manticore_server_config_tittle'),
 			'</strong><small><em>' . $txt['manticore_server_config_note'] . '</em></small><strong>',
+			array('text', 'manticore_index_name', 65, 'default_value' => 'smf', 'subtext' => $txt['manticore_index_name_subtext']),
 			array('text', 'manticore_data_path', 65, 'default_value' => '/var/lib/manticore/data', 'subtext' => $txt['manticore_data_path_subtext']),
 			array('text', 'manticore_log_path', 65, 'default_value' => '/var/log/manticore', 'subtext' => $txt['manticore_log_path_subtext']),
 			array('text', 'manticore_conf_path', 65, 'default_value' => '/etc/manticoresearch', 'subtext' => $txt['manticore_conf_path_subtext']),
@@ -249,7 +250,7 @@ class manticore_search extends search_api
 				$modSettings['manticore_max_results'] = '1000';
 
 			// Compile different options for our query
-			$query = 'SELECT * FROM smf_index';
+			$query = 'SELECT * FROM ' . self::indexName() . '_index';
 
 			// Construct the (binary mode) query.
 			$where_match = $this->_constructQuery($query_params['search']);
@@ -540,7 +541,7 @@ class manticore_search extends search_api
 
 		// The insert query, use replace to make sure we don't get duplicates.
 		$query = '
-			REPLACE INTO smf_index (' . implode(', ', array_keys($insertValues)) . ')
+			REPLACE INTO ' . self::indexName() . '_index (' . implode(', ', array_keys($insertValues)) . ')
 			VALUES (' . implode(', ', array_values($insertValues)) . ')';
 
 		// Execute the search query.
@@ -602,7 +603,7 @@ class manticore_search extends search_api
 
 		// SMF only calls this search API when we delete, not recycle. So this will always be a remove.
 		$query = '
-			DELETE FROM smf_index
+			DELETE FROM ' . self::indexName() . '_index
 			WHERE id_msg = ' . $id_msg;
 
 		// Execute the search query.
@@ -643,7 +644,7 @@ class manticore_search extends search_api
 
 		// SMF only calls this search API when we delete, not recycle. So this will always be a remove.
 		$query = '
-			DELETE FROM smf_index
+			DELETE FROM ' . self::indexName() . '_index
 			WHERE id_topic IN (' . implode(', ', $topics) . ')';
 
 		// Execute the search query.
@@ -685,7 +686,7 @@ class manticore_search extends search_api
 
 		// SMF only calls this search API when we delete, not recycle. So this will always be a remove.
 		$query = '
-			UPDATE smf_index
+			UPDATE ' . self::indexName() . '_index
 			SET id_board = ' . $board_to . '
 			WHERE id_topic IN (' . implode(', ', $topics) . ')';
 
@@ -807,7 +808,7 @@ class manticore_search extends search_api
 	{
 		return mysqli_error($myManticore);
 	}
-	
+
 	/**
 	 * Manticore Version
 	 *
@@ -847,8 +848,20 @@ class manticore_search extends search_api
 		// No version?
 		if (empty($m) || empty($m[1]) || empty($m[2]))
 			return;
-			
+
 		return $m[1] . '.' . $m[2];
+	}
+
+	/**
+	 * Index name
+	 *
+	 * @access private
+	 * @return string The name of the idnex.
+	 */
+	private static function indexName()
+	{
+		global $modSettings;
+		return !empty($modSettings['manticore_index_name']) ? $modSettings['manticore_index_name'] : 'smf';
 	}
 }
 
@@ -873,6 +886,7 @@ function template_callback_SMFAction_Manticore_Hints()
 	}
 
 	// Ensure these exist.
+	$index_name = !empty($modSettings['sphinx_index_name']) ? $modSettings['sphinx_index_name'] : 'smf';
 	if (empty($modSettings['manticore_conf_path']))
 		$modSettings['manticore_conf_path'] = '/etc/manticoresearch';
 	if (empty($modSettings['manticore_bin_path']))
@@ -923,8 +937,8 @@ sudo -u manticore ' . $modSettings['manticore_bin_path'] . '/searchd --config ' 
 		' . $txt['manticore_config_hints_index_finish'] . '
 		[hr]
 		' . $txt['manticore_config_hints_cron_start'] . '[pre]# search indexer
-10 3 * * * ' . $modSettings['manticore_bin_path'] . '/indexer --config ' . $modSettings['manticore_conf_path'] . '/manticore.conf --rotate smf_base_index
-0 * * * * ' . $modSettings['manticore_bin_path'] . '/indexer --config ' . $modSettings['manticore_conf_path'] . '/manticore.conf --rotate smf_delta_index[/pre]';
+10 3 * * * ' . $modSettings['manticore_bin_path'] . '/indexer --config ' . $modSettings['manticore_conf_path'] . '/manticore.conf --rotate ' . $index_name . '_base_index
+0 * * * * ' . $modSettings['manticore_bin_path'] . '/indexer --config ' . $modSettings['manticore_conf_path'] . '/manticore.conf --rotate ' . $index_name . '_delta_index[/pre]';
 
 	// Print out our message.
 	echo parse_bbc($message);
@@ -932,7 +946,6 @@ sudo -u manticore ' . $modSettings['manticore_bin_path'] . '/searchd --config ' 
 	echo '
 					<dl class="settings">';
 }
-
 
 // This is the manticore configuration file.
 /**
@@ -977,6 +990,7 @@ function generateManticoreConfig()
 		$supported_db_type = 'mysql';
 
 	$host = $modSettings['manticore_searchd_server'] == 'localhost' ? '127.0.0.1' : $modSettings['manticore_searchd_server'];
+	$index_name = !empty($modSettings['manticore_index_name']) ? $modSettings['manticore_index_name'] : 'smf';
 
 	// Lets fall out of SMF templating and start the headers to serve a file.
 	ob_end_clean();
@@ -1009,7 +1023,7 @@ function generateManticoreConfig()
 # By default the location of this file would probably be:
 # ' . (empty($modSettings['manticore_conf_path']) ? '/etc/manticoresearch' : $modSettings['manticore_conf_path'])  . '/manticore.conf
 
-source smf_source
+source ' . $index_name . '_source
 {
 	type				= ', $supported_db_type, '
 	sql_host			= ', $db_server, '
@@ -1081,7 +1095,7 @@ source smf_source
 	echo '
 }
 
-source smf_delta_source : smf_source
+source ' . $index_name . '_delta_source : ' . $index_name . '_source
 {
 	sql_query_pre		= ', isset($db_character_set) ? 'SET NAMES ' . $db_character_set : '', '
 	sql_query_range		= \
@@ -1091,29 +1105,29 @@ source smf_delta_source : smf_source
 			AND s2.variable = \'maxMsgID\'
 }
 
-index smf_base_index
+index ' . $index_name . '_base_index
 {
 	type				= plain
 	html_strip			= 1
-	source				= smf_source
-	path				= ', $modSettings['manticore_data_path'], '/smf_manticore_base.index', empty($modSettings['manticore_stopword_path']) ? '' : '
+	source				= ' . $index_name . '_source
+	path				= ', $modSettings['manticore_data_path'], '/' . $index_name . '_manticore_base.index', empty($modSettings['manticore_stopword_path']) ? '' : '
 	stopwords			= ' . $modSettings['manticore_stopword_path'], '
 	min_word_len		= 2
 	charset_table		= 0..9, A..Z->a..z, _, a..z
 }
 
-index smf_delta_index : smf_base_index
+index ' . $index_name . '_delta_index : ' . $index_name . '_base_index
 {
 	type				= plain
-	source				= smf_delta_source
-	path				= ', $modSettings['manticore_data_path'], '/smf_manticore_delta.index
+	source				= ' . $index_name . '_delta_source
+	path				= ', $modSettings['manticore_data_path'], '/' . $index_name . '_manticore_delta.index
 }
 
-index smf_index
+index ' . $index_name . '_index
 {
 	type				= distributed
-	local				= smf_base_index
-	local				= smf_delta_index
+	local				= ' . $index_name . '_base_index
+	local				= ' . $index_name . '_delta_index
 }
 
 indexer
@@ -1122,12 +1136,7 @@ indexer
 }
 
 searchd
-{';
-
-	// This is for the non legacy QL version, which we are not going support at this time.
-	//	listen			= ', (int) $modSettings['manticore_searchd_port'], '
-
-	echo '
+{
 	listen				= ', !empty($modSettings['manticore_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['manticore_searchd_port']) ? 9306 : (int) $modSettings['manticore_searchd_port']), ':mysql41
 	log					= ', $modSettings['manticore_log_path'], '/searchd.log
 	query_log			= ', $modSettings['manticore_log_path'], '/query.log
