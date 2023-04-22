@@ -269,9 +269,9 @@ class manticore_search extends search_api
 				$extra_where[] = 'id >= ' . $query_params['min_msg_id'] . ' AND id <=' . (empty($query_params['max_msg_id']) ? (int) $modSettings['maxMsgID'] : $query_params['max_msg_id']);
 			if (!empty($query_params['topic']))
 				$extra_where[] = 'id_topic = ' . (int) $query_params['topic'];
-			if (!empty($search_params['brd']) && is_array($search_params['brd']))
+			if (!empty($query_params['brd']) && is_array($query_params['brd']))
 				$extra_where[] = 'id_board IN (' . implode(',', $query_params['brd']) . ')';
-			if (!empty($search_params['memberlist']) && is_array($search_params['memberlist']))
+			if (!empty($query_params['memberlist']) && is_array($query_params['memberlist']))
 				$extra_where[] = 'id_member IN (' . implode(',', $query_params['memberlist']) . ')';
 
 			if (!empty($extra_where) && is_array($extra_where))
