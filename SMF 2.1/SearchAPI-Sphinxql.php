@@ -1192,7 +1192,7 @@ index ' . $index_name . '_base_index
 	if (empty($context['sphinx_version']) || (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.5', '<=')))
 		echo '
 	field		= subject, body
-	attr_uint	= id_msg, id_topic, id_board, id_member, poster_time, relevance, num_replies';
+	attr_uint	= id_topic, id_board, id_member, poster_time, relevance, num_replies';
 
 	echo '
 	charset_table	= 0..9, A..Z->a..z, _, a..z
