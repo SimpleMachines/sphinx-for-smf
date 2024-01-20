@@ -250,7 +250,8 @@ class sphinxql_search extends search_api
 		global $user_info, $context, $modSettings;
 
 		// Only request the results if they haven't been cached yet.
-		if (($cached_results = cache_get_data('Xsearch_results_' . md5($user_info['query_see_board'] . '_' . $context['params']))) === null)
+		$cached_results = cache_get_data('Xsearch_results_' . md5($user_info['query_see_board'] . '_' . $context['params']));
+		if (!is_array($cached_results))
 		{
 			// Create an instance of the sphinx client.
 			$mySphinx = $this->dbfunc_connect();
