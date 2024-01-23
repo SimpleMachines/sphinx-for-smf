@@ -15,6 +15,9 @@ $txt['sphinx_smf_sphinx_tittle'] = 'Sphinx SMF Settings';
 $txt['sphinx_smf_tittle'] = 'SMF Settings';
 $txt['sphinx_config_hints_title'] = 'Sphinx Server Configuration Hints';
 
+$txt['sphinx_base_path'] = 'Base data path';
+$txt['sphinx_base_path_subtext'] = 'This is the path that will be containing the search index files used by Sphinx.';
+
 $txt['sphinx_data_path'] = 'Index data path';
 $txt['sphinx_data_path_subtext'] = 'This is the path that will be containing the search index files used by Sphinx.';
 

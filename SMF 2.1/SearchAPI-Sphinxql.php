@@ -132,12 +132,9 @@ class sphinxql_search extends search_api
 			array('title', 'sphinx_server_config_tittle'),
 			'</strong><small><em>' . $txt['sphinx_server_config_note'] . '</em></small><strong>',
 			array('text', 'sphinx_index_name', 65, 'default_value' => 'smf', 'subtext' => $txt['sphinx_index_name_subtext']),
-			array('text', 'sphinx_data_path', 65, 'default_value' => '/var/sphinx/data', 'subtext' => $txt['sphinx_data_path_subtext']),
-			array('text', 'sphinx_log_path', 65, 'default_value' => '/var/sphinx/log', 'subtext' => $txt['sphinx_log_path_subtext']),
+			array('text', 'sphinx_base_path', 65, 'default_value' => '/var/sphinx/data', 'subtext' => $txt['sphinx_base_path_subtext']),
 			array('text', 'sphinx_conf_path', 65, 'default_value' => '/etc/sphinxsearch', 'subtext' => $txt['sphinx_conf_path_subtext']),
 			array('text', 'sphinx_bin_path', 65, 'default_value' => '/usr/bin', 'subtext' => $txt['sphinx_bin_path_subtext']),
-			array('text', 'sphinx_stopword_path', 65, 'default_value' => '', 'subtext' => $txt['sphinx_stopword_path_subtext']),
-			array('int', 'sphinx_indexer_mem', 6, 'default_value' => '32', 'subtext' => $txt['sphinx_indexer_mem_subtext'], 'postinput' => $txt['sphinx_indexer_mem_postinput']),
 			array('int', 'sphinx_indexer_mem', 6, 'default_value' => '32', 'subtext' => $txt['sphinx_indexer_mem_subtext'], 'postinput' => $txt['sphinx_indexer_mem_postinput']),
 
 			// SMF Configuration Settings.
@@ -153,9 +150,6 @@ class sphinxql_search extends search_api
 			array('callback', 'SMFAction_Sphinx_Hints'),
 		);
 
-		// Merge them in.
-		$config_vars = array_merge($config_vars, $local_config_vars);
-
 		$context['post_url'] = $scripturl . '?action=admin;area=modsettings;save;sa=sphinx';
 		$context['settings_title'] = $txt['sphinx_server_config_tittle'];
 		$context['sphinx_version'] = self::sphinxversion();
@@ -167,6 +161,28 @@ class sphinxql_search extends search_api
 			$modSettings['sphinx_version'] = $context['sphinx_version'];
 		else
 			$context['sphinx_version'] = '3.0';
+
+		// Change settings for older sphinxs
+		if (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.5', '>'))
+		{
+			$part1 = array_slice($local_config_vars, 0, 3);
+			$part2 = array_slice($local_config_vars, 4, 5);
+			$part3 = array_slice($local_config_vars, 7);
+			
+			$local_config_vars = array_merge(
+				$part1,
+				array(
+					array('text', 'sphinx_data_path', 65, 'default_value' => '/var/sphinx/data', 'subtext' => $txt['sphinx_data_path_subtext']),
+					array('text', 'sphinx_log_path', 65, 'default_value' => '/var/sphinx/log', 'subtext' => $txt['sphinx_log_path_subtext']),
+					array('text', 'sphinx_stopword_path', 65, 'default_value' => '', 'subtext' => $txt['sphinx_stopword_path_subtext']),
+				),
+				$part2,
+				$part3
+			);
+		}
+
+		// Merge them in.
+		$config_vars = array_merge($config_vars, $local_config_vars);
 
 		// Saving?
 		if (isset($_GET['save']))
@@ -944,8 +960,11 @@ function template_callback_SMFAction_Sphinx_Hints()
 
 	$message = '
 		' . sprintf($txt['sphinx_config_hints_desc'], $modSettings['sphinx_data_path']) . '[pre]mkdir -p ' . $modSettings['sphinx_data_path'] . '
+chmod a+w ' . $modSettings['sphinx_data_path'];
+
+		if (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.5', '>'))
+			$message .= '
 mkdir -p ' . $modSettings['sphinx_log_path'] . '
-chmod a+w ' . $modSettings['sphinx_data_path'] . '
 chmod a+w ' . $modSettings['sphinx_log_path'] . '[/pre]';
 
 	// Add a extra step for postgresql.
@@ -1036,6 +1055,8 @@ function generateSphinxConfig()
 	$host = $modSettings['sphinx_searchd_server'] == 'localhost' ? '127.0.0.1' : $modSettings['sphinx_searchd_server'];
 	$index_name = !empty($modSettings['sphinx_index_name']) ? $modSettings['sphinx_index_name'] : 'smf';
 
+	$modSettings['sphinx_base_path'] ??= $modSettings['sphinx_data_path'];
+
 	// Lets fall out of SMF templating and start the headers to serve a file.
 	ob_end_clean();
 	ob_start();
@@ -1075,22 +1096,22 @@ source ' . $index_name . '_source
 	sql_pass	= ', $db_passwd, '
 	sql_db		= ', $db_name, '
 	sql_port	= 3306', empty($db_character_set) ? '' : '
-	sql_query_pre = SET NAMES ' . $db_character_set;
+	sql_query_pre	= SET NAMES ' . $db_character_set;
 
 	// Thanks to TheStupidOne for pgsql queries.
 	if ($db_type == 'pgsql')
 		echo '
-	sql_query_pre = \
+	sql_query_pre	= \
 		SELECT update_settings(\'sphinx_indexed_msg_until\', (SELECT MAX(id_msg) FROM PREFIX_messages))';
 	else
 		echo '
-	sql_query_pre =	\
+	sql_query_pre	=	\
 		REPLACE INTO ', $db_prefix, 'settings (variable, value) \
 		SELECT \'sphinx_indexed_msg_until\', MAX(id_msg) \
 		FROM ', $db_prefix, 'messages';
 
 	echo '
-	sql_query_range = \
+	sql_query_range	= \
 		SELECT 1, value \
 		FROM ', $db_prefix, 'settings \
 		WHERE variable = \'sphinx_indexed_msg_until\'
@@ -1099,7 +1120,7 @@ source ' . $index_name . '_source
 	// Thanks to TheStupidOne for pgsql queries.
 	if ($db_type == 'pgsql')
 		echo '
-	sql_query =     \
+	sql_query	=     \
 	SELECT \
 		m.id_msg, m.id_topic, m.id_board, CASE WHEN m.id_member = 0 THEN 4294967295 ELSE m.id_member END AS id_member, m.poster_time, m.body, m.subject, \
 		t.num_replies + 1 AS num_replies, CEILING(1000000 * ( \
@@ -1114,7 +1135,7 @@ source ' . $index_name . '_source
 		AND m.id_msg BETWEEN $start AND $end';
 	else
 		echo '
-	sql_query =	\
+	sql_query	=	\
 		SELECT \
 			m.id_msg, m.id_topic, m.id_board, IF(m.id_member = 0, 4294967295, m.id_member) AS id_member, m.poster_time, m.body, m.subject, \
 			t.num_replies + 1 AS num_replies, CEILING(1000000 * ( \
@@ -1128,7 +1149,9 @@ source ' . $index_name . '_source
 			AND s.variable = \'maxMsgID\' \
 			AND m.id_msg BETWEEN $start AND $end';
 
-	echo '
+	// Sphinx 3.5 and above this is moved.
+	if (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.5', '>'))
+		echo '
 	sql_attr_uint = id_topic
 	sql_attr_uint = id_board
 	sql_attr_uint = id_member';
@@ -1139,7 +1162,8 @@ source ' . $index_name . '_source
 	sql_attr_timestamp = poster_time
 	sql_attr_timestamp = relevance
 	sql_attr_timestamp = num_replies';
-	else
+	// Sphinx 3.5 moved these and changed to attr_uint.
+	else if (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.5', '>'))
 		echo '
 	sql_attr_uint = poster_time
 	sql_attr_uint = relevance
@@ -1162,24 +1186,29 @@ index ' . $index_name . '_base_index
 {
 	html_strip	= 1
 	source		= ' . $index_name . '_source
-	path		= ', $modSettings['sphinx_data_path'], '/' . $index_name . '_sphinx_base.index', empty($modSettings['sphinx_stopword_path']) ? '' : '
-	stopwords	= ' . $modSettings['sphinx_stopword_path'], '
-	min_word_len	= 2
+	stopwords	= ' . ($modSettings['sphinx_stopword_path'] ?? '') . '
+	min_word_len	= 2';
+
+	// Sphinc 3.5 and above this should be located here.
+	if (empty($context['sphinx_version']) || (!empty($context['sphinx_version']) && version_compare($context['sphinx_version'], '3.5', '<=')))
+		echo '
+	field		= subject, body
+	attr_uint	= id_topic, id_board, id_member, poster_time, relevance, num_replies';
+
+	echo '
 	charset_table	= 0..9, A..Z->a..z, _, a..z
 }
 
 index ' . $index_name . '_delta_index : ' . $index_name . '_base_index
 {
 	source		= ' . $index_name . '_delta_source
-	path		= ', $modSettings['sphinx_data_path'], '/' . $index_name . '_sphinx_delta.index
 }
 
 index ' . $index_name . '_index
 {
 	type		= distributed
 	local		= ' . $index_name . '_base_index
-	local		= ' . $index_name . '_delta_index
-}
+	local		= ' . $index_name . '_delta_index}
 
 indexer
 {
@@ -1189,12 +1218,15 @@ indexer
 searchd
 {
 	listen		= ', !empty($modSettings['sphinx_searchd_bind']) ? $host : '0.0.0.0', ':', (empty($modSettings['sphinxql_searchd_port']) ? 9306 : (int) $modSettings['sphinxql_searchd_port']), ':mysql41
-	log		= ', $modSettings['sphinx_log_path'], '/searchd.log
-	query_log	= ', $modSettings['sphinx_log_path'], '/query.log
+	log		=
+	query_log	=
 	read_timeout	= 5
 	max_children	= 30
-	pid_file	= ', $modSettings['sphinx_data_path'], '/searchd.pid
-	binlog_path	= ', $modSettings['sphinx_data_path'], '
+}
+
+common
+{
+        datadir		= ', $modSettings['sphinx_base_path'], '
 }';
 
 	die;
